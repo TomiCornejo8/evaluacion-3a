@@ -19,11 +19,11 @@ def load_data():
     # Ponermos en la variable 42 su clase correspondiente
     clase = {
         # Clase 1: Normal (Tráfico legítimo):
-        1: ["normal","ftp_write","imap"],
+        1: ["normal"],
         # Clase 2: DOS (Denegación de Servicio) (Ataques de Denegación de Servicio):
-        2: ["back","land","neptune","pod","smurf","teardrop","buffer_overflow","guess_passwd","phf","spy","warezclient","warezmaster"],
+        2: ["back","land","neptune","pod","smurf","teardrop","apache2","processtable","mailbomb","udpstorm"],
         # Clase 3: Probe (Sondeo) (Intentos de sondeo o exploración de la red):
-        3: ["ipsweep","loadmodule","multihop","nmap","portsweep","satan","rootkit"]
+        3: ["ipsweep","nmap","portsweep","satan","rootkit","saint","mscan"]
     }
     # Tomamos la variable 42 tipo de tráfico.
     var_42 = X[:, 41]
@@ -37,6 +37,10 @@ def load_data():
 
     # Reemplazar la columna original con los valores numéricos
     X[:, 41] = new_var_42
+
+    # Se filtran las var 42 que no cumplen con ninguna clase del ppt
+    condicion = (new_var_42 == "1") | (new_var_42 == "2") | (new_var_42 == "3")
+    X = X[condicion]
 
     # Transformar variables categoricas a numeros enteros
     # Encontramos los valores únicos de cada variable
@@ -54,26 +58,25 @@ def load_data():
         fila[2] = mapeo3[fila[2]]
         fila[3] = mapeo4[fila[3]]
     
-    X_float = X.astype(float)
-    
-    # Definimos los valores de a y b
-    a = 0.01
-    b = 0.99
-
-    # Calcula los valores mínimos y máximos de las columnas 1 a 41
-    x_min = X_float[:, 0:41].min(axis=0)
-    x_max = X_float[:, 0:41].max(axis=0)
-
-    x_max[x_max == x_min] += 1e-20 # Para evitar divisiones con 0
-
-    # Realiza la normalización para las columnas 1 a 41
-    X_float[:, 0:41] = ((X_float[:, 0:41] - x_min) / (x_max - x_min)) * (b - a) + a
-
-    return X_float
+    return rsvd.norm_data(X.astype(float))
 
 # selecting variables
-def select_vars():
-    ...
+def select_vars(X,param):
+    # Se randomiza las muestras de la BD
+    random_index = np.random.permutation(X.shape[0])
+    X = X[random_index, :]
+    # Se corta al N° de muestras pedido en los parametros
+    N = param[0]
+    X = X[:N]
+
+    # Array de configuración de clases
+    m = np.array([1*param[3],2*param[4],3*param[5]])
+    m = m[m != 0]
+
+    # Se calcula la ganacia de información
+    I = ig.inform_estimate(X,N,m)
+    E = ig.entropy_xy(X,N,m,I)
+
     return()
 
 #save results
@@ -85,10 +88,10 @@ def save_results():
 # Beginning ...
 def main():
     param = load_config()            
-    X = load_data()   
+    X = load_data()
+    select_vars(X,param)    
     # [gain, idx, V]= select_vars(X,param)                 
     # save_results(gain,idx,V)
-    print(X[0])
        
 if __name__ == '__main__':   
     main()

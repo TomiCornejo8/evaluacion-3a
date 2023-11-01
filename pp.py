@@ -14,7 +14,7 @@ def load_config():
 # Load data 
 def load_data():
     # Se lee el data set KDDTrain
-    X = np.genfromtxt('KDDTrain.txt', delimiter=',',dtype=str,encoding='utf-8')
+    data = np.genfromtxt('KDDTrain.txt', delimiter=',',dtype=str,encoding='utf-8')
 
     # Ponermos en la variable 42 su clase correspondiente
     clase = {
@@ -26,7 +26,7 @@ def load_data():
         3: ["ipsweep","nmap","portsweep","satan","rootkit","saint","mscan"]
     }
     # Tomamos la variable 42 tipo de tráfico.
-    var_42 = X[:, 41]
+    var_42 = data[:, 41]
 
     # Se crea una nueva matriz para almacenar los valores numéricos de la clase (1, 2 ó 3)
     new_var_42 = np.zeros_like(var_42)
@@ -36,13 +36,11 @@ def load_data():
         new_var_42[np.isin(var_42, clase_lista)] = valor
 
     # Reemplazar la columna original con los valores numéricos
-    X[:, 41] = new_var_42
-
-    # Se filtran las var 42 que no cumplen con ninguna clase del ppt
-    condicion = (new_var_42 == "1") | (new_var_42 == "2") | (new_var_42 == "3")
-    X = X[condicion]
+    Y = new_var_42
 
     # Transformar variables categoricas a numeros enteros
+    # Se saca la matriz de caracteristicas
+    X = data[:,:41]
     # Encontramos los valores únicos de cada variable
     var2_unicas = np.unique(X[:,1])
     var3_unicas = np.unique(X[:,2])
@@ -58,24 +56,36 @@ def load_data():
         fila[2] = mapeo3[fila[2]]
         fila[3] = mapeo4[fila[3]]
     
-    return rsvd.norm_data(X.astype(float))
+    return rsvd.norm_data(X.astype(float)),Y
 
 # selecting variables
-def select_vars(X,param):
+def select_vars(X,Y,param):
     # Se randomiza las muestras de la BD
-    random_index = np.random.permutation(X.shape[0])
+    random_index = np.genfromtxt('idx_samples.csv', delimiter=',',dtype=int,encoding='utf-8')
+    # Se pasan posciones de 0 a n-1
+    random_index -= 1
+    # Se aplica el random a las muestras 
     X = X[random_index, :]
+    Y = Y[random_index]
+    print(f"X={len(X)} Y={len(Y)}")
+
+    # Se toman solo las clases indicadas en el archivo de configuración
+    m = np.where(np.array([param[3],param[4],param[5]]) == 1)[0] + 1
+    selected_index = np.where(np.isin(Y,m.astype(str)))[0]
+    X = X[selected_index,:]
+    Y = (Y[selected_index]).astype(int)
+    
     # Se corta al N° de muestras pedido en los parametros
     N = param[0]
-    X = X[:N]
-
-    # Array de configuración de clases
-    m = np.array([1*param[3],2*param[4],3*param[5]])
-    m = m[m != 0]
+    if(N <= X.shape[0]):
+        X = X[:N]
+        Y = Y[:N]
+    else:
+        N = X.shape[0]
 
     # Se calcula la ganacia de información
-    I = ig.inform_estimate(X,N,m)
-    E = ig.entropy_xy(X,N,m,I)
+    I = ig.inform_estimate(Y,N,m)
+    # E = ig.entropy_xy(X,Y,N,m,I)
 
     return()
 
@@ -88,8 +98,8 @@ def save_results():
 # Beginning ...
 def main():
     param = load_config()            
-    X = load_data()
-    select_vars(X,param)    
+    X,Y = load_data()
+    select_vars(X,Y,param)    
     # [gain, idx, V]= select_vars(X,param)                 
     # save_results(gain,idx,V)
        

@@ -67,7 +67,6 @@ def select_vars(X,Y,param):
     # Se aplica el random a las muestras 
     X = X[random_index, :]
     Y = Y[random_index]
-    print(f"X={len(X)} Y={len(Y)}")
 
     # Se toman solo las clases indicadas en el archivo de configuración
     m = np.where(np.array([param[3],param[4],param[5]]) == 1)[0] + 1
@@ -83,10 +82,61 @@ def select_vars(X,Y,param):
     else:
         N = X.shape[0]
 
-    # Se calcula la ganacia de información
-    I = ig.inform_estimate(Y,N,m)
-    # E = ig.entropy_xy(X,Y,N,m,I)
+    # Se calcula la información estimada
+    I = ig.inform_estimate(Y)
+    
+    # Se calcula la entropia, y ganacia de la información
+    IG = np.zeros(X.shape[1])
+    for j in range(X.shape[1]):
+        E = ig.entropy_xy(X[:,j],Y)
+        IG[j] = I - E
 
+    # Ordenamos por los top-k relevantes, y asignamos el nuevo X
+    K = param[1]
+    top_k_indices = np.argsort(IG)[::-1][:K]
+    X = X[:,top_k_indices]
+
+    # SVD
+
+    # Centrar en media la data X.
+    for j in range(X.shape[1]):
+        x_mean = np.mean(X[:,j])
+        X[:,j] = X[:,j] - x_mean
+    
+    # Se normaliza X
+    X_norm = X / np.sqrt(N - 1)
+
+    # Se saca la descomposición SVD
+    # U, S, V = np.linalg.svd(X_norm)
+
+    # Calcular la matriz de covarianza C
+    C = np.dot(X_norm.T, X_norm)
+
+    # Calcular los autovectores y autovalores
+    eigenvalues, eigenvectors = np.linalg.eig(C)
+
+    # Ordenar los autovalores y autovectores de manera descendente
+    sorted_indices = np.argsort(eigenvalues)[::-1]
+    eigenvalues = eigenvalues[sorted_indices]
+    eigenvectors = eigenvectors[:, sorted_indices]
+
+    # Calcular las matrices U y V
+    U = X_norm.dot(eigenvectors)
+    V = eigenvectors.T
+
+    # Obtener la matriz diagonal de valores singulares S
+    S = np.sqrt(eigenvalues)
+
+    # Asegurarse de que U y V sean matrices unitarias
+    U /= np.linalg.norm(U, axis=0)
+    V /= np.linalg.norm(V, axis=1)
+
+    # Asegurarse de que S sea una matriz diagonal
+    S = np.diag(S)
+
+    k = param[2]
+    X = np.dot(X,V)[:,k]
+    print(X)
     return()
 
 #save results

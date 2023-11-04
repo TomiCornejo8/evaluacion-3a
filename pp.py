@@ -93,8 +93,11 @@ def select_vars(X,Y,param):
 
     # Ordenamos por los top-k relevantes, y asignamos el nuevo X
     K = param[1]
-    top_k_indices = np.argsort(IG)[::-1][:K]
-    X = X[:,top_k_indices]
+    # Se ordenan los IG decrecientemente
+    idx = np.argsort(IG)[::-1]
+    IG = IG[idx]
+    # Se ordenan y se cortan los K valores relevancia
+    X = (X[:,idx])[:,:K]
 
     # SVD
 
@@ -106,42 +109,21 @@ def select_vars(X,Y,param):
     # Se normaliza X
     X_norm = X / np.sqrt(N - 1)
 
-    # Se saca la descomposición SVD
-    # U, S, V = np.linalg.svd(X_norm)
-
-    # Calcular la matriz de covarianza C
-    C = np.dot(X_norm.T, X_norm)
-
-    # Calcular los autovectores y autovalores
-    eigenvalues, eigenvectors = np.linalg.eig(C)
-
-    # Ordenar los autovalores y autovectores de manera descendente
-    sorted_indices = np.argsort(eigenvalues)[::-1]
-    eigenvalues = eigenvalues[sorted_indices]
-    eigenvectors = eigenvectors[:, sorted_indices]
-
-    # Calcular las matrices U y V
-    U = X_norm.dot(eigenvectors)
-    V = eigenvectors.T
-
-    # Obtener la matriz diagonal de valores singulares S
-    S = np.sqrt(eigenvalues)
-
-    # Asegurarse de que U y V sean matrices unitarias
-    U /= np.linalg.norm(U, axis=0)
-    V /= np.linalg.norm(V, axis=1)
-
-    # Asegurarse de que S sea una matriz diagonal
-    S = np.diag(S)
+    print(X.shape[1])
+    V = rsvd.svd_data(X_norm) 
 
     k = param[2]
-    X = np.dot(X,V)[:,k]
-    print(X)
-    return()
+    X = np.dot(X,V[:, :k])
+
+    
+    
+    return IG,idx,V[:, :k]
 
 #save results
-def save_results():
-    ...
+def save_results(gain,idx,V):
+    np.savetxt("gain_values.csv", gain, delimiter=',', fmt='%0.2f')
+    np.savetxt("gain_idx.csv", idx, delimiter=',', fmt='%d')
+    np.savetxt("filter_v.csv", V, delimiter=',', fmt='%0.2f')
     return
 
 #-------------------------------------------------------------------
@@ -149,9 +131,8 @@ def save_results():
 def main():
     param = load_config()            
     X,Y = load_data()
-    select_vars(X,Y,param)    
-    # [gain, idx, V]= select_vars(X,param)                 
-    # save_results(gain,idx,V)
+    [gain, idx, V]= select_vars(X,Y,param)                 
+    save_results(gain,idx,V)
        
 if __name__ == '__main__':   
     main()

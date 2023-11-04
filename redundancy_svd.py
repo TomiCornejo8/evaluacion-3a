@@ -20,9 +20,11 @@ def norm_data(X):
     return X
 
 # SVD of the data
-def svd_data():
-    ...    
-    return()
+def svd_data(X_norm):
+    # Se saca la descomposición SVD
+    U, S, VT = np.linalg.svd(X_norm)    
+    
+    return VT.T
 
 
 

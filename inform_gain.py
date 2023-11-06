@@ -13,19 +13,26 @@ def inform_estimate(data):
     return -np.sum(pi*np.log2(pi))
 
 # Entropy of the variables  
-def entropy_xy(X_column,Y):
-    # Obtenemos los valores unicos del atributo
-    unique_values, value_counts = np.unique(X_column, return_counts=True)
+def entropy_xy(X_column,Y):    
+    N = len(X_column)
+    B = int(np.sqrt(N))
 
-    # Cortamos los valores hasta B
-    B = int(np.sqrt(len(X_column)))
-    unique_values = unique_values[:B]
-    value_counts = value_counts[:B]
+    # Calcula la resolución
+    resolucion = (np.max(X_column) - np.min(X_column)) / B
+
+    # Calcula los límites de X_column
+    limites = (np.arange(B) * resolucion) + np.min(X_column)
+
+    # Calcula los intervalos
+    intervalos = np.digitize(X_column, limites)
+
+    # Obtenemos los valores unicos del atributo
+    unique_values = np.unique(intervalos)
 
     # Calculamos la "entropia"
     E = 0 
     for value in unique_values:
-        subset_indices = np.where(X_column == value)
+        subset_indices = np.where(intervalos == value)[0]
         subset_data = Y[subset_indices]
         E += (len(subset_data) / len(Y)) * inform_estimate(subset_data)
     return E

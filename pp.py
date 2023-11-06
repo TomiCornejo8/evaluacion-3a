@@ -107,14 +107,11 @@ def select_vars(X,Y,param):
     # Se normaliza X
     X_norm = X / np.sqrt(N - 1)
 
-    print(X.shape[1])
     V = rsvd.svd_data(X_norm) 
 
     k = param[2]
     X = np.dot(X,V[:, :k])
 
-    
-    
     return IG,idx,V[:, :k]
 
 #save results

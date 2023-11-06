@@ -1,60 +1,29 @@
 import numpy as np
 
-# Datos de ejemplo
-X = np.array([['A', 'X', 'Z', 'P'],
-              ['B', 'Y', 'Z', 'Q'],
-              ['A', 'X', 'W', 'P'],
-              ['C', 'Y', 'W', 'Q'],
-              ['B', 'X', 'W', 'P'],
-              ['A', 'Y', 'Z', 'Q'],
-              ['C', 'X', 'Z', 'P'],
-              ['A', 'X', 'W', 'P'],
-              ['B', 'Y', 'W', 'Q'],
-              ['C', 'Y', 'W', 'P']])
+X = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0])  # Este es tu vector X de ejemplo
+# X = np.array([0,1,2,3,1,1,2,3,4])
+N = len(X)
+B = int(np.sqrt(N))  # Calcula B como la raíz cuadrada de N
 
-y = np.array([1, 0, 1, 0, 1, 0, 1, 1, 0, 0])
+# Calcula la resolución
+resolucion = (np.max(X) - np.min(X)) / (B - 1)
 
-# Función para calcular la entropía de un conjunto de datos
-def entropy(data):
-    # Calcula la probabilidad de cada clase
-    unique_classes, class_counts = np.unique(data, return_counts=True)
-    class_probabilities = class_counts / len(data)
-    
-    # Calcula la entropía
-    entropy = -np.sum(class_probabilities * np.log2(class_probabilities))
-    
-    return entropy
+# Calcula los límites de los intervalos
+intervalos = (np.arange(B) * resolucion) + np.min(X)
 
-# Función para calcular la ganancia de información de un atributo
-def information_gain(data, attribute_column):
-    # Calcula la entropía del conjunto de datos original
-    original_entropy = entropy(data)
-    
-    # Divide el conjunto de datos en subconjuntos según el valor del atributo
-    unique_values, value_counts = np.unique(attribute_column, return_counts=True)
-    weighted_entropy = 0
-    
-    for value in unique_values:
-        subset_indices = np.where(attribute_column == value)
-        subset_data = data[subset_indices]
-        weighted_entropy += (len(subset_data) / len(data)) * entropy(subset_data)
-    
-    # Calcula la ganancia de información
-    information_gain = original_entropy - weighted_entropy
-    
-    return information_gain
+intervalos[B-1] = intervalos[B-1] + 1 
 
-# Calcular la ganancia de información para cada columna de atributos
-num_columns = X.shape[1]
-information_gains = []
+print(f"B = {B}")
+print(f"N° Intervalos = {len(intervalos)}")
+print(f"Intervalos = {intervalos}")
 
-for i in range(num_columns):
-    attribute_column = X[:, i]
-    ig = information_gain(y, attribute_column)
-    information_gains.append(ig)
-    print(f'Ganancia de Información para atributo {i}: {ig}')
+particiones = np.digitize(X, intervalos) - 1
 
-# Encuentra el índice del atributo con la mayor ganancia de información
-best_attribute_index = np.argmax(information_gains)
-best_attribute_name = f'Atributo {best_attribute_index}'
-print(f'\nEl mejor atributo es {best_attribute_name} con una ganancia de información de {information_gains[best_attribute_index]}')
+# Obtenemos los valores unicos del atributo
+unique_values = np.unique(particiones)
+
+# Calculamos la "entropia"
+for value in unique_values:
+    subset_indices = np.where(particiones == value)
+    subset_data = X[subset_indices]
+    print(f"({value+1}) {subset_data}")

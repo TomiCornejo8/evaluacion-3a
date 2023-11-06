@@ -1,6 +1,4 @@
 # Pre-proceso: Selecting variables for IDS
-
-
 import numpy          as np
 import inform_gain    as ig
 import redundancy_svd as rsvd
@@ -121,9 +119,9 @@ def select_vars(X,Y,param):
 
 #save results
 def save_results(gain,idx,V):
-    np.savetxt("gain_values.csv", gain, delimiter=',', fmt='%0.2f')
+    np.savetxt("gain_values.csv", gain, delimiter=',', fmt='%f')
     np.savetxt("gain_idx.csv", idx, delimiter=',', fmt='%d')
-    np.savetxt("filter_v.csv", V, delimiter=',', fmt='%0.2f')
+    np.savetxt("filter_v.csv", V, delimiter=',', fmt='%f')
     return
 
 #-------------------------------------------------------------------
